@@ -16,12 +16,16 @@ import {
 import type {
   RazorpayPaymentResponse,
 } from "@/lib/types/razorpay";
+import GameInterface from "@/components/game/GameInterface";
 
 export default function LandingPage() {
-  const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const { isAuthenticated, user, logout, isLoading, checkAuth } = useAuth();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const router = useRouter();
+
+  const isVip = user?.isVip || user?.isPremium;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -34,28 +38,56 @@ export default function LandingPage() {
     await logout();
   };
 
-  const handleStartNow = async () => {
+  const handleBecomeVip = async () => {
+    console.log("Become VIP button clicked");
+    
     if (!isAuthenticated || !user) {
+      console.log("User not authenticated, redirecting to signup");
       router.push("/signup");
       return;
     }
 
-    if (!razorpayLoaded || !isRazorpayLoaded()) {
-      alert("Payment gateway is loading. Please wait a moment and try again.");
+    // Check if Razorpay is loaded
+    const razorpayReady = razorpayLoaded && isRazorpayLoaded();
+    console.log("Razorpay loaded:", razorpayReady, "State:", razorpayLoaded, "Window:", typeof window !== 'undefined' && typeof window.Razorpay !== 'undefined');
+
+    if (!razorpayReady) {
+      console.warn("Razorpay not ready, waiting...");
+      // Wait a bit and check again
+      setTimeout(() => {
+        if (isRazorpayLoaded()) {
+          setRazorpayLoaded(true);
+          handleBecomeVip(); // Retry
+        } else {
+          alert("Payment gateway is loading. Please wait a moment and try again.");
+        }
+      }, 1000);
       return;
     }
 
     setIsProcessingPayment(true);
+    console.log("Creating payment order...");
 
     try {
       // Create order on backend
       const orderResponse = await apiClient.createPaymentOrder(65500, "INR");
+      console.log("Order response:", orderResponse);
 
       if (!orderResponse.success || !orderResponse.order) {
         throw new Error(orderResponse.message || "Failed to create order");
       }
 
       const order = orderResponse.order;
+      console.log("Order created:", order);
+
+      // Get Razorpay key ID
+      let razorpayKeyId: string;
+      try {
+        razorpayKeyId = getRazorpayKeyId();
+        console.log("Razorpay key ID:", razorpayKeyId.substring(0, 10) + "...");
+      } catch (error) {
+        throw new Error("Razorpay key is not configured. Please contact support.");
+      }
 
       // Initialize Razorpay checkout
       const options = getDefaultRazorpayOptions(
@@ -63,6 +95,7 @@ export default function LandingPage() {
         order.amount,
         order.currency,
         async function (response: RazorpayPaymentResponse) {
+          console.log("Payment response:", response);
           // Verify payment on backend
           try {
             const verifyResponse = await apiClient.verifyPayment({
@@ -71,10 +104,12 @@ export default function LandingPage() {
               razorpay_signature: response.razorpay_signature,
             });
 
+            console.log("Verification response:", verifyResponse);
+
             if (verifyResponse.success) {
               alert("Payment successful! Your VIP subscription is now active.");
-              // Refresh page or update user status
-              window.location.reload();
+              // Refresh user data
+              await checkAuth();
             } else {
               alert(
                 verifyResponse.message ||
@@ -94,16 +129,23 @@ export default function LandingPage() {
         }
       );
 
+      // Ensure key is set
+      options.key = razorpayKeyId;
+
       // Add modal dismiss handler
       options.modal = {
         ondismiss: function () {
+          console.log("Razorpay modal dismissed");
           setIsProcessingPayment(false);
         },
       };
 
+      console.log("Opening Razorpay checkout...");
       const razorpay = createRazorpayCheckout(options);
       razorpay.open();
-      razorpay.on("payment.failed", function () {
+      
+      razorpay.on("payment.failed", function (response: any) {
+        console.error("Payment failed:", response);
         alert("Payment failed. Please try again.");
         setIsProcessingPayment(false);
       });
@@ -116,6 +158,19 @@ export default function LandingPage() {
       );
       setIsProcessingPayment(false);
     }
+  };
+
+  const handleStartNow = async () => {
+    console.log("Start Now button clicked");
+    
+    if (!isAuthenticated || !user) {
+      console.log("User not authenticated, redirecting to signup");
+      router.push("/signup");
+      return;
+    }
+
+    // Start the game for all authenticated users
+    setGameStarted(true);
   };
 
   // Show loading state while checking authentication
@@ -173,37 +228,26 @@ export default function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)] px-4">
-        <div className="w-full max-w-md rounded-3xl p-8 shadow-2xl border border-gray-700/30 backdrop-blur-sm bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-gray-900/90 relative overflow-hidden">
+      <main className="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)] px-4 overflow-x-hidden">
+        <div className="w-full max-w-md rounded-3xl p-4 sm:p-8 shadow-2xl border border-gray-700/30 backdrop-blur-sm bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-gray-900/90 relative overflow-hidden">
           {/* Inner glow effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-cyan-500/5 rounded-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
-            {/* Select Game Button */}
-            <div className="flex justify-center mb-6">
-              <button className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-full text-white font-medium text-sm flex items-center gap-2 transition-all shadow-lg shadow-blue-600/30">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10 2L12.09 7.26L18 8.27L14 12.14L14.91 18.02L10 15.77L5.09 18.02L6 12.14L2 8.27L7.91 7.26L10 2Z"
-                    fill="white"
-                  />
-                </svg>
-                Select The Game
-              </button>
-            </div>
-
             {/* VIP Status */}
             <div className="text-center mb-6">
-              {user?.isPremium || user?.isVip ? (
+              {isVip ? (
                 <>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="inline-block bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                      Online
+                    </span>
+                    <span className="text-white text-sm">
+                      {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
                   <h2 className="text-2xl font-bold text-white mb-2">
-                    YOU&apos;RE VIP ★
+                    YOU&apos;RE VIP USER 💎
                   </h2>
                   {user?.vipExpiresAt && (
                     <p className="text-sm text-gray-300 mb-2">
@@ -212,36 +256,61 @@ export default function LandingPage() {
                   )}
                 </>
               ) : (
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  YOU&apos;RE NOT VIP 😢
-                </h2>
+                <>
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="inline-block bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                      Online
+                    </span>
+                    <span className="text-white text-sm">
+                      {new Date().toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-bold text-yellow-400 mb-2">
+                    YOU&apos;RE NOT VIP 😔
+                  </h2>
+                </>
               )}
-              <p className="text-lg font-semibold text-white mb-6">CLICK TO START</p>
+              {!gameStarted && (
+                <p className="text-lg font-semibold text-white mb-6">CLICK TO START</p>
+              )}
             </div>
+
+            {/* Game Interface - Show for all authenticated users after game started */}
+            {/* TODO: Change back to isVip && gameStarted for production */}
+            {gameStarted && (
+              <div className="mb-6 bg-gradient-to-br from-orange-400 via-orange-500 to-yellow-500 rounded-lg p-4 sm:p-6 border-2 border-orange-600 shadow-xl w-full overflow-hidden">
+                <GameInterface onGameStart={() => setGameStarted(true)} />
+              </div>
+            )}
+
+            {/* Become VIP Button - Show for non-VIP users */}
+            {!isVip && (
+              <div className="flex justify-center mb-4">
+                <button
+                  onClick={handleBecomeVip}
+                  disabled={isProcessingPayment}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full text-white font-bold text-base transition-all shadow-lg shadow-purple-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isProcessingPayment ? "Processing..." : "BECOME VIP"}
+                </button>
+              </div>
+            )}
 
             {/* Start Now Button */}
             <div className="flex justify-center mb-8">
               <button
                 onClick={handleStartNow}
-                disabled={isProcessingPayment}
+                disabled={isProcessingPayment || gameStarted}
                 className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-bold text-base transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessingPayment ? "Processing..." : "START NOW"}
+                {isProcessingPayment
+                  ? "Processing..."
+                  : gameStarted
+                  ? "GAME STARTED"
+                  : "START NOW"}
               </button>
             </div>
 
-            {/* New User Section */}
-            {!isAuthenticated && (
-              <div className="text-center mb-6">
-                <p className="text-lg font-bold text-white mb-4">NEW USER?</p>
-                <Link
-                  href="/signup"
-                  className="inline-block px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-600 hover:to-cyan-500 rounded-full text-primary-dark font-semibold text-sm transition-all shadow-lg shadow-cyan-500/30"
-                >
-                  Sign Up Jalwa Game
-                </Link>
-              </div>
-            )}
           </div>
 
           {/* Social Media Icons */}
@@ -299,12 +368,14 @@ export default function LandingPage() {
       <Script
         id="razorpay-checkout-js"
         src="https://checkout.razorpay.com/v1/checkout.js"
-        strategy="lazyOnload"
+        strategy="afterInteractive"
         onLoad={() => {
+          console.log("Razorpay script loaded");
           setRazorpayLoaded(true);
         }}
-        onError={() => {
-          console.error("Failed to load Razorpay script");
+        onError={(e) => {
+          console.error("Failed to load Razorpay script:", e);
+          alert("Failed to load payment gateway. Please refresh the page.");
         }}
       />
     </div>

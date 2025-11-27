@@ -129,6 +129,38 @@ class ApiClient {
       body: JSON.stringify(paymentData),
     }) as Promise<ApiResponse & { payment?: { orderId: string; paymentId: string }; user?: User }>;
   }
+
+  // Game API methods
+  async getGameTypes(): Promise<ApiResponse & { data?: Array<{ id: string; name: string; icon: string }> }> {
+    return this.request('/api/game/types') as Promise<ApiResponse & { data?: Array<{ id: string; name: string; icon: string }> }>;
+  }
+
+  async getGamePeriods(gameType: string): Promise<ApiResponse & { data?: Array<any> }> {
+    return this.request(`/api/game/periods?gameType=${gameType}`) as Promise<ApiResponse & { data?: Array<any> }>;
+  }
+
+  async startGame(gameType: string, timeInterval: string): Promise<ApiResponse & { data?: any }> {
+    return this.request('/api/game/start', {
+      method: 'POST',
+      body: JSON.stringify({ gameType, timeInterval }),
+    }) as Promise<ApiResponse & { data?: any }>;
+  }
+
+  async submitPrediction(data: {
+    gameType: string;
+    periodNumber: string;
+    prediction: string;
+    timeInterval: string;
+  }): Promise<ApiResponse & { data?: any }> {
+    return this.request('/api/game/predict', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }) as Promise<ApiResponse & { data?: any }>;
+  }
+
+  async getGameResults(gameType: string, periodNumber: string): Promise<ApiResponse & { data?: any }> {
+    return this.request(`/api/game/results?gameType=${gameType}&periodNumber=${periodNumber}`) as Promise<ApiResponse & { data?: any }>;
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);
