@@ -278,7 +278,7 @@ export default function LandingPage() {
             {/* Game Interface - Show for all authenticated users after game started */}
             {/* TODO: Change back to isVip && gameStarted for production */}
             {gameStarted && (
-              <div className="mb-6 bg-gradient-to-br from-orange-400 via-orange-500 to-yellow-500 rounded-lg p-4 sm:p-6 border-2 border-orange-600 shadow-xl w-full overflow-hidden">
+              <div className="mb-6 bg-gradient-to-br from-orange-400 via-orange-500 to-yellow-500 rounded-lg p-4 sm:p-6 border-2 border-orange-600 shadow-xl w-full">
                 <GameInterface onGameStart={() => setGameStarted(true)} />
               </div>
             )}

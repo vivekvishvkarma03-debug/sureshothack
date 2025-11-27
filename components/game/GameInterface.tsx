@@ -131,7 +131,7 @@ export default function GameInterface({ onGameStart }: GameInterfaceProps) {
       </div>
 
       {/* Time Interval Selector */}
-      <div className="w-full overflow-hidden">
+      <div className="w-full">
         <TimeIntervalSelector
           selectedInterval={selectedInterval}
           onIntervalChange={setSelectedInterval}
@@ -155,7 +155,7 @@ export default function GameInterface({ onGameStart }: GameInterfaceProps) {
       {/* Prediction Buttons */}
       {periodNumber && (
         <>
-          <div className="w-full overflow-hidden">
+          <div className="w-full">
             <PredictionButtons
               onPredictionSelect={setSelectedPrediction}
               selectedPrediction={selectedPrediction}
