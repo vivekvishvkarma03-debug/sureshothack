@@ -6,10 +6,20 @@ import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { useAuth } from "@/context/AuthContext";
 import Script from "next/script";
+import { apiClient } from "@/lib/api";
+import {
+  getRazorpayKeyId,
+  isRazorpayLoaded,
+  createRazorpayCheckout,
+  getDefaultRazorpayOptions,
+} from "@/lib/utils/razorpay-client";
+import type {
+  RazorpayPaymentResponse,
+} from "@/lib/types/razorpay";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: new (options: RazorpayCheckoutOptions) => RazorpayInstance;
   }
 }
 
@@ -36,7 +46,7 @@ export default function LandingPage() {
       return;
     }
 
-    if (!razorpayLoaded || !window.Razorpay) {
+    if (!razorpayLoaded || !isRazorpayLoaded()) {
       alert("Payment gateway is loading. Please wait a moment and try again.");
       return;
     }
@@ -45,82 +55,61 @@ export default function LandingPage() {
 
     try {
       // Create order on backend
-      const response = await fetch("/api/payments/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: 65500, // ₹655 in paise
-          currency: "INR",
-        }),
-      });
+      const orderResponse = await apiClient.createPaymentOrder(65500, "INR");
 
-      const orderData = await response.json();
-
-      if (!orderData.success || !orderData.order) {
-        throw new Error(orderData.message || "Failed to create order");
+      if (!orderResponse.success || !orderResponse.order) {
+        throw new Error(orderResponse.message || "Failed to create order");
       }
 
-      const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      if (!razorpayKeyId) {
-        throw new Error("Razorpay key is not configured");
-      }
+      const order = orderResponse.order;
 
       // Initialize Razorpay checkout
-      const options = {
-        key: razorpayKeyId,
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
-        name: "SureShot_Hack",
-        description: "VIP Subscription - 28 Days",
-        order_id: orderData.order.id,
-        handler: async function (response: any) {
+      const options = getDefaultRazorpayOptions(
+        order.id,
+        order.amount,
+        order.currency,
+        async function (response: RazorpayPaymentResponse) {
           // Verify payment on backend
           try {
-            const verifyResponse = await fetch("/api/payments/verify", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
+            const verifyResponse = await apiClient.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
             });
 
-            const verifyData = await verifyResponse.json();
-
-            if (verifyData.success) {
+            if (verifyResponse.success) {
               alert("Payment successful! Your VIP subscription is now active.");
               // Refresh page or update user status
               window.location.reload();
             } else {
-              alert("Payment verification failed. Please contact support.");
+              alert(
+                verifyResponse.message ||
+                  "Payment verification failed. Please contact support."
+              );
             }
           } catch (error) {
             console.error("Payment verification error:", error);
             alert("Payment verification failed. Please contact support.");
+          } finally {
+            setIsProcessingPayment(false);
           }
         },
-        prefill: {
-          name: user.fullName || "",
-          email: user.email || "",
-        },
-        theme: {
-          color: "#FF6B35",
-        },
-        modal: {
-          ondismiss: function () {
-            setIsProcessingPayment(false);
-          },
+        {
+          fullName: user.fullName,
+          email: user.email,
+        }
+      );
+
+      // Add modal dismiss handler
+      options.modal = {
+        ondismiss: function () {
+          setIsProcessingPayment(false);
         },
       };
 
-      const razorpay = new window.Razorpay(options);
+      const razorpay = createRazorpayCheckout(options);
       razorpay.open();
-      razorpay.on("payment.failed", function (response: any) {
+      razorpay.on("payment.failed", function () {
         alert("Payment failed. Please try again.");
         setIsProcessingPayment(false);
       });
@@ -218,9 +207,16 @@ export default function LandingPage() {
             {/* VIP Status */}
             <div className="text-center mb-6">
               {user?.isPremium || user?.isVip ? (
-                <h2 className="text-2xl font-bold text-white mb-2">
-                  YOU&apos;RE VIP ★
-                </h2>
+                <>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    YOU&apos;RE VIP ★
+                  </h2>
+                  {user?.vipExpiresAt && (
+                    <p className="text-sm text-gray-300 mb-2">
+                      Expires: {new Date(user.vipExpiresAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </>
               ) : (
                 <h2 className="text-2xl font-bold text-white mb-2">
                   YOU&apos;RE NOT VIP 😢

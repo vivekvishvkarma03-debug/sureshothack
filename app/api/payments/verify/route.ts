@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { requireAuth } from '@/lib/middleware/auth';
+import { verifyPaymentAndUpdateUser } from '@/lib/services/paymentService';
+import type { RazorpayVerifyRequest } from '@/lib/types/razorpay';
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify authentication
+    const authUser = requireAuth(request);
+
     const body = await request.json();
     const {
       razorpay_order_id,
@@ -10,6 +15,7 @@ export async function POST(request: NextRequest) {
       razorpay_signature,
     } = body;
 
+    // Validate required fields
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return NextResponse.json(
         {
@@ -20,50 +26,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify signature
-    const text = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const secret = process.env.RAZORPAY_KEY_SECRET || '';
-    const generatedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(text)
-      .digest('hex');
+    // Verify payment and update user status
+    const paymentData: RazorpayVerifyRequest = {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    };
 
-    const isSignatureValid = generatedSignature === razorpay_signature;
+    const result = await verifyPaymentAndUpdateUser(
+      authUser.userId,
+      paymentData
+    );
 
-    if (!isSignatureValid) {
+    if (!result.success) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Invalid payment signature',
+          message: result.message,
         },
-        { status: 400 }
+        { status: result.message.includes('signature') ? 400 : 500 }
       );
     }
 
-    // TODO: Update user subscription status in database
-    // TODO: Store payment details in database
-    // Example:
-    // await updateUserSubscription(userId, {
-    //   isVip: true,
-    //   subscriptionExpiresAt: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000),
-    //   paymentId: razorpay_payment_id,
-    //   orderId: razorpay_order_id,
-    // });
-
     return NextResponse.json({
       success: true,
-      message: 'Payment verified successfully',
-      payment: {
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id,
-      },
+      message: result.message,
+      payment: result.payment,
+      user: result.user,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Unauthorized',
+        },
+        { status: 401 }
+      );
+    }
     console.error('Payment verification error:', error);
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : 'Payment verification failed',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Payment verification failed',
       },
       { status: 500 }
     );

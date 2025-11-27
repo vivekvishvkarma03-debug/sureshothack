@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const users = getAllUsers();
-    const count = getUserCount();
+    const users = await getAllUsers();
+    const count = await getUserCount();
 
     return NextResponse.json({
       success: true,
