@@ -1,0 +1,10 @@
+{
+  "buildCommand": "prisma generate && next build",
+  "crons": [
+    {
+      "path": "/api/admin/revoke-expired-vips",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
+

@@ -17,12 +17,6 @@ import type {
   RazorpayPaymentResponse,
 } from "@/lib/types/razorpay";
 
-declare global {
-  interface Window {
-    Razorpay: new (options: RazorpayCheckoutOptions) => RazorpayInstance;
-  }
-}
-
 export default function LandingPage() {
   const { isAuthenticated, user, logout, isLoading } = useAuth();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);

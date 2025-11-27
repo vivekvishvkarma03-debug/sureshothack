@@ -73,11 +73,15 @@ export const createRazorpayOrder = async (
   try {
     const order = await razorpay.orders.create(orderOptions);
 
+    // Razorpay returns amount as number, but TypeScript types it as string | number
+    // Convert to number to ensure type safety
+    const amount = typeof order.amount === 'string' ? parseInt(order.amount, 10) : order.amount;
+
     return {
       id: order.id,
-      amount: order.amount,
+      amount,
       currency: order.currency,
-      receipt: order.receipt,
+      receipt: order.receipt || `receipt_${Date.now()}`, // Provide default if undefined
     };
   } catch (error) {
     console.error('Razorpay order creation error:', error);

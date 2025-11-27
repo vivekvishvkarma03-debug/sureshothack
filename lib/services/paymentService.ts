@@ -83,9 +83,9 @@ export const verifyPaymentAndUpdateUser = async (
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
-        isVip: updatedUser.isVip,
-        isPremium: updatedUser.isPremium,
-        vipExpiresAt: updatedUser.vipExpiresAt,
+        isVip: updatedUser.isVip ?? false,
+        isPremium: updatedUser.isPremium ?? false,
+        vipExpiresAt: updatedUser.vipExpiresAt ?? null,
       },
     };
   } catch (error) {
