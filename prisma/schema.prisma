@@ -22,6 +22,43 @@ model User {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  gameSessions GameSession[]
+
   @@map("users")
+}
+
+model GameSession {
+  id          String   @id @default(uuid())
+  userId      String
+  gameType    String   // "Jalwa", "Tashan", etc.
+  timeInterval String  // "30s", "1m", "5m"
+  periodNumber String
+  prediction  String?  // User's prediction (e.g., "3", "SMALL GREEN")
+  result      String?  // Actual result
+  isWin       Boolean?
+  status      String   @default("pending") // "pending", "completed", "won", "lost"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("game_sessions")
+  @@index([userId])
+  @@index([periodNumber])
+}
+
+model GamePeriod {
+  id          String   @id @default(uuid())
+  gameType    String
+  periodNumber String
+  result      String?  // The winning number/color
+  status      String   @default("open") // "open", "closed", "resulted"
+  closesAt    DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("game_periods")
+  @@unique([gameType, periodNumber])
+  @@index([gameType, status])
 }
 
