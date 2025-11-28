@@ -25,6 +25,7 @@ export default function LandingPage() {
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string>("");
   const [gameResult, setGameResult] = useState<{ number: number; color: string; imageUrl: string } | null>(null);
+  const [timer, setTimer] = useState(0);
   const router = useRouter();
 
   const isVip = user?.isVip || user?.isPremium;
@@ -191,6 +192,11 @@ export default function LandingPage() {
       return;
     }
 
+    // If timer is active, don't allow clicking
+    if (timer > 0) {
+      return;
+    }
+
     // User is VIP, start the game
     // Generate random number result
     const randomIndex = Math.floor(Math.random() * numberImages.length);
@@ -198,7 +204,27 @@ export default function LandingPage() {
     
     setGameResult(result);
     setGameStarted(true);
+    setTimer(30); // Start 30 second timer
   };
+
+  // Timer countdown effect
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer((prevTimer) => {
+          if (prevTimer <= 1) {
+            // Timer completed, reset game result
+            setGameResult(null);
+            setGameStarted(false);
+            return 0;
+          }
+          return prevTimer - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -291,10 +317,14 @@ export default function LandingPage() {
             <div className={`flex flex-col items-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-6 sm:mb-4 md:mb-5'}`}>
               <button
                 onClick={handleStartNow}
-                disabled={isProcessingPayment}
+                disabled={isProcessingPayment || timer > 0}
                 className="px-8 py-4 sm:px-6 sm:py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-serif font-bold text-base sm:text-base transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessingPayment ? "Processing..." : "START NOW"}
+                {isProcessingPayment 
+                  ? "Processing..." 
+                  : timer > 0 
+                  ? `WAIT ${timer}s` 
+                  : "START NOW"}
               </button>
               {!isVip && (
                 <div className="flex flex-col items-center mt-2">
@@ -336,9 +366,15 @@ export default function LandingPage() {
                     }}
                   />
                 </div>
-                <p className="text-xl sm:text-xl md:text-2xl font-serif font-bold text-white capitalize">
+                <p className="text-xl sm:text-xl md:text-2xl font-serif font-bold text-white capitalize mb-1">
                   {gameResult.color}
                 </p>
+                {/* Timer display below coin */}
+                {timer > 0 && (
+                  <p className="text-white font-serif text-sm sm:text-xs opacity-75">
+                    {timer}s
+                  </p>
+                )}
               </div>
             )}
 
