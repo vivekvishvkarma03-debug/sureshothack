@@ -296,7 +296,12 @@ export default function LandingPage() {
               >
                 {isProcessingPayment ? "Processing..." : "START NOW"}
               </button>
-              <p className="text-white font-serif text-sm sm:text-xs mt-2">vivekvishvkarma@yesg</p>
+              {!isVip && (
+                <div className="flex flex-col items-center mt-2">
+                  
+                  <p className="text-white font-serif text-sm sm:text-xs"> Pay here: vivekvishvkarma@yesg</p>
+                </div>
+              )}
             </div>
 
             {/* Game Result - Show random number icon after game started (VIP only) */}
