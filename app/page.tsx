@@ -291,14 +291,10 @@ export default function LandingPage() {
             <div className={`flex justify-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-6 sm:mb-4 md:mb-5'}`}>
               <button
                 onClick={handleStartNow}
-                disabled={isProcessingPayment || (gameStarted && isVip)}
+                disabled={isProcessingPayment}
                 className="px-8 py-4 sm:px-6 sm:py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-serif font-bold text-base sm:text-base transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isProcessingPayment
-                  ? "Processing..."
-                  : gameStarted && isVip
-                  ? "GAME STARTED"
-                  : "START NOW"}
+                {isProcessingPayment ? "Processing..." : "START NOW"}
               </button>
             </div>
 
