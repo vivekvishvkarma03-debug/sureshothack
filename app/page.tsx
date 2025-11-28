@@ -16,7 +16,6 @@ import {
 import type {
   RazorpayPaymentResponse,
 } from "@/lib/types/razorpay";
-import GameInterface from "@/components/game/GameInterface";
 import GameSelector from "@/components/game/GameSelector";
 
 export default function LandingPage() {
@@ -25,9 +24,24 @@ export default function LandingPage() {
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string>("");
+  const [gameResult, setGameResult] = useState<{ number: number; color: string; imageUrl: string } | null>(null);
   const router = useRouter();
 
   const isVip = user?.isVip || user?.isPremium;
+
+  // Number images with colors
+  const numberImages = [
+    { number: 0, color: "red/purple", imageUrl: "/images/0redpurple.png" },
+    { number: 1, color: "green", imageUrl: "/images/1green.png" },
+    { number: 2, color: "red", imageUrl: "/images/2red.png" },
+    { number: 3, color: "green", imageUrl: "/images/3green.png" },
+    { number: 4, color: "red", imageUrl: "/images/4red.png" },
+    { number: 5, color: "green/purple", imageUrl: "/images/5greenpurple.png" },
+    { number: 6, color: "red", imageUrl: "/images/6red.png" },
+    { number: 7, color: "green", imageUrl: "/images/7green.png" },
+    { number: 8, color: "red", imageUrl: "/images/8red.png" },
+    { number: 9, color: "green", imageUrl: "/images/9green.png" },
+  ];
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -171,7 +185,18 @@ export default function LandingPage() {
       return;
     }
 
-    // Start the game for all authenticated users
+    // If user is not VIP, trigger payment flow
+    if (!isVip) {
+      handleBecomeVip();
+      return;
+    }
+
+    // User is VIP, start the game
+    // Generate random number result
+    const randomIndex = Math.floor(Math.random() * numberImages.length);
+    const result = numberImages[randomIndex];
+    
+    setGameResult(result);
     setGameStarted(true);
   };
 
@@ -179,7 +204,7 @@ export default function LandingPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+            <div className="text-white text-xl font-serif">Loading...</div>
       </div>
     );
   }
@@ -190,7 +215,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black relative">
+    <div className="min-h-screen h-screen overflow-y-auto sm:overflow-hidden bg-gradient-to-br from-black via-gray-900 to-black relative">
       {/* Background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl"></div>
@@ -198,22 +223,22 @@ export default function LandingPage() {
       </div>
 
       {/* Header - Visible on all screens */}
-      <header className="relative z-10 flex items-center justify-between p-3 sm:p-6">
-        <Link href="/" className="flex items-center gap-2 sm:gap-3">
+      <header className="relative z-10 flex items-center justify-between p-2 sm:p-2.5 md:p-3">
+        <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
           <Logo size="sm" showText={false} />
-          <h1 className="text-white text-base sm:text-xl font-bold">SureShot_Hack</h1>
+          <h1 className="text-white text-sm sm:text-lg md:text-xl font-serif font-bold">SureShot_Hack</h1>
         </Link>
-        <div className="flex gap-2 sm:gap-3 items-center">
+        <div className="flex gap-1.5 sm:gap-2 items-center">
           {isLoading ? (
-            <div className="text-white text-sm">Loading...</div>
+            <div className="text-white text-xs sm:text-sm font-serif">Loading...</div>
           ) : isAuthenticated ? (
             <>
-              <span className="text-white text-xs sm:text-sm hidden sm:inline">
+              <span className="text-white text-xs sm:text-xs md:text-sm font-serif hidden sm:inline">
                 Welcome, {user?.fullName || user?.email}
               </span>
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 sm:px-6 sm:py-2 bg-blue-600 sm:bg-red-600 hover:bg-blue-700 sm:hover:bg-red-700 rounded-lg text-white text-xs sm:text-base font-medium transition-colors"
+                className="px-2.5 py-1 sm:px-4 sm:py-1.5 md:px-5 md:py-2 bg-blue-600 sm:bg-red-600 hover:bg-blue-700 sm:hover:bg-red-700 rounded-lg text-white text-xs sm:text-sm md:text-base font-serif font-medium transition-colors"
               >
                 Logout
               </button>
@@ -221,7 +246,7 @@ export default function LandingPage() {
           ) : (
             <Link
               href="/login"
-              className="px-3 py-1.5 sm:px-6 sm:py-2 bg-primary-dark-gray hover:bg-primary-light-gray rounded-lg text-white text-xs sm:text-base font-medium transition-colors"
+              className="px-2.5 py-1 sm:px-4 sm:py-1.5 md:px-5 md:py-2 bg-primary-dark-gray hover:bg-primary-light-gray rounded-lg text-white text-xs sm:text-sm md:text-base font-serif font-medium transition-colors"
             >
               Login
             </Link>
@@ -230,15 +255,15 @@ export default function LandingPage() {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex items-center justify-center h-[calc(100vh-80px)] sm:h-[calc(100vh-96px)] px-4 sm:px-4 overflow-hidden">
-        <div className="w-full h-auto sm:h-auto sm:max-w-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-[0_0_30px_rgba(59,130,246,0.3),0_0_60px_rgba(59,130,246,0.2)] border border-gray-700/30 backdrop-blur-sm bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-gray-900/90 relative overflow-hidden flex flex-col justify-center">
+      <main className="relative z-10 flex items-center justify-center h-[calc(100vh-64px)] sm:h-[calc(100vh-68px)] md:h-[calc(100vh-72px)] px-4 sm:px-4 overflow-y-auto sm:overflow-hidden">
+        <div className={`w-full h-auto sm:h-auto sm:max-w-lg rounded-2xl sm:rounded-3xl ${gameStarted ? 'p-5 sm:p-4 md:p-5' : 'p-6 sm:p-5 md:p-6'} shadow-[0_0_30px_rgba(59,130,246,0.3),0_0_60px_rgba(59,130,246,0.2)] border border-gray-700/30 backdrop-blur-sm bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-gray-900/90 relative overflow-visible flex flex-col justify-center my-4 sm:my-0`}>
           {/* Inner glow effect */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-cyan-500/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
           
           <div className="relative z-10 flex flex-col justify-center">
             {/* Select Game Button - At the top */}
             {!gameStarted && (
-              <div className="flex justify-center mb-6 sm:mb-4">
+              <div className="flex justify-center mb-6 sm:mb-3 md:mb-4">
                 <GameSelector 
                   selectedGame={selectedGame} 
                   onGameChange={setSelectedGame} 
@@ -247,64 +272,94 @@ export default function LandingPage() {
             )}
 
             {/* VIP Status */}
-            <div className="text-center mb-5 sm:mb-4">
+            <div className={`text-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-6 sm:mb-3 md:mb-4'}`}>
               {isVip ? (
-                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-2">
+                <h2 className={`font-serif font-bold text-white mb-2 ${gameStarted ? 'text-2xl sm:text-xl md:text-2xl' : 'text-3xl sm:text-2xl md:text-3xl'}`}>
                   YOU&apos;RE VIP USER ★
                 </h2>
               ) : (
-                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white mb-2">
+                <h2 className={`font-serif font-bold text-white mb-2 ${gameStarted ? 'text-2xl sm:text-xl md:text-2xl' : 'text-3xl sm:text-2xl md:text-3xl'}`}>
                   YOU&apos;RE NOT VIP ★
                 </h2>
               )}
               {!gameStarted && (
-                <p className="text-lg sm:text-xl font-serif font-semibold text-white mb-5 sm:mb-4">CLICK TO START</p>
+                <p className="text-xl sm:text-lg md:text-xl font-serif font-semibold text-white mb-6 sm:mb-3 md:mb-4">CLICK TO START</p>
               )}
             </div>
 
-            {/* Game Interface - Show for all authenticated users after game started */}
-            {/* TODO: Change back to isVip && gameStarted for production */}
-            {gameStarted && (
-              <div className="mb-6 bg-gradient-to-br from-orange-400 via-orange-500 to-yellow-500 rounded-lg p-4 sm:p-6 border-2 border-orange-600 shadow-xl w-full">
-                <GameInterface onGameStart={() => setGameStarted(true)} />
-              </div>
-            )}
-
-            {/* Become VIP Button - Show for non-VIP users */}
-            {!isVip && (
-              <div className="flex justify-center mb-3 sm:mb-3">
-                <button
-                  onClick={handleBecomeVip}
-                  disabled={isProcessingPayment}
-                  className="px-5 py-2.5 sm:px-5 sm:py-2.5 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full text-white font-bold text-sm sm:text-sm transition-all shadow-lg shadow-purple-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isProcessingPayment ? "Processing..." : "BECOME VIP"}
-                </button>
-              </div>
-            )}
-
-            {/* Start Now Button */}
-            <div className="flex justify-center mb-5 sm:mb-6">
+            {/* Start Now Button - Shows payment flow for non-VIP, starts game for VIP */}
+            <div className={`flex justify-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-6 sm:mb-4 md:mb-5'}`}>
               <button
                 onClick={handleStartNow}
-                disabled={isProcessingPayment || gameStarted}
-                className="px-6 py-3 sm:px-6 sm:py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-bold text-sm sm:text-base transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isProcessingPayment || (gameStarted && isVip)}
+                className="px-8 py-4 sm:px-6 sm:py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-serif font-bold text-base sm:text-base transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessingPayment
                   ? "Processing..."
-                  : gameStarted
+                  : gameStarted && isVip
                   ? "GAME STARTED"
                   : "START NOW"}
               </button>
             </div>
 
+            {/* Game Result - Show random number icon after game started (VIP only) */}
+            {gameStarted && gameResult && isVip && (
+              <div className="flex flex-col items-center justify-center mb-5 sm:mb-3 md:mb-4">
+                <div className="relative w-36 h-36 sm:w-32 md:w-36 sm:h-32 md:h-36 mb-3 sm:mb-2 md:mb-3 flex items-center justify-center">
+                  {/* Shadow layer behind the coin */}
+                  <div className="absolute inset-0 bg-black/30 rounded-full blur-xl scale-110"></div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={gameResult.imageUrl}
+                    alt={`Number ${gameResult.number}`}
+                    className="w-full h-full object-contain relative z-10 drop-shadow-2xl"
+                    style={{ 
+                      maxWidth: '100%', 
+                      height: 'auto',
+                      display: 'block',
+                      filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5)) drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3))'
+                    }}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      console.error("Failed to load image:", gameResult.imageUrl);
+                      const target = e.currentTarget;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent && !parent.querySelector('.fallback')) {
+                        const fallback = document.createElement("div");
+                        fallback.className = "fallback w-full h-full flex items-center justify-center bg-gray-700 rounded-lg";
+                        fallback.innerHTML = `<span class="text-4xl font-bold text-white">${gameResult.number}</span>`;
+                        parent.appendChild(fallback);
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-xl sm:text-xl md:text-2xl font-serif font-bold text-white capitalize">
+                  {gameResult.color}
+                </p>
+              </div>
+            )}
+
+          </div>
+
+          {/* New User Section - Above social icons */}
+          <div className={`text-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-5 sm:mb-3 md:mb-4'}`}>
+            <p className="text-xl sm:text-lg md:text-xl font-serif font-bold text-white mb-4 sm:mb-2 md:mb-3">NEW USER ?</p>
+            <a
+              href="https://jalwagame1.link/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-8 py-4 sm:px-5 sm:py-2 md:px-6 md:py-3 bg-blue-400 hover:bg-blue-500 rounded-full text-white font-serif font-bold text-base sm:text-sm md:text-base transition-all shadow-md hover:shadow-lg underline"
+            >
+              Sign Up Jalwa Game
+            </a>
           </div>
 
           {/* Social Media Icons */}
-          <div className="flex justify-center gap-3 sm:gap-4 mt-4 sm:mt-6">
+          <div className={`flex justify-center gap-4 sm:gap-3 md:gap-4 ${gameStarted ? 'mt-4 sm:mt-2 md:mt-3' : 'mt-5 sm:mt-3 md:mt-4'}`}>
             <a
               href="#"
-              className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
+              className="w-12 h-12 sm:w-12 sm:h-12 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
               aria-label="WhatsApp"
             >
               <svg
@@ -319,7 +374,7 @@ export default function LandingPage() {
             </a>
             <a
               href="#"
-              className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors"
+              className="w-12 h-12 sm:w-12 sm:h-12 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors"
               aria-label="Telegram"
             >
               <svg
@@ -334,7 +389,7 @@ export default function LandingPage() {
             </a>
             <a
               href="#"
-              className="w-10 h-10 sm:w-12 sm:h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
+              className="w-12 h-12 sm:w-12 sm:h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
               aria-label="YouTube"
             >
               <svg
