@@ -27,6 +27,7 @@ export default function LandingPage() {
   const [gameResult, setGameResult] = useState<{ number: number; color: string; imageUrl: string } | null>(null);
   const [timer, setTimer] = useState(0);
   const router = useRouter();
+  const upiId = "vivekvishvkarma@yesg";
 
   const isVip = user?.isVip || user?.isPremium;
 
@@ -226,6 +227,68 @@ export default function LandingPage() {
     }
   }, [timer]);
 
+  // Copy UPI ID to clipboard
+  const copyUpiId = async () => {
+    try {
+      await navigator.clipboard.writeText(upiId);
+      alert("UPI ID copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy UPI ID:", error);
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = upiId;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        alert("UPI ID copied to clipboard!");
+      } catch (err) {
+        alert("Failed to copy UPI ID. Please copy manually: " + upiId);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
+  // Download QR code
+  const downloadQRCode = () => {
+    try {
+      const link = document.createElement("a");
+      link.href = "/images/image.png";
+      link.download = "upi-qr-code.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Failed to download QR code:", error);
+      alert("Failed to download QR code");
+    }
+  };
+
+  // Copy QR code image
+  const copyQRCode = async () => {
+    try {
+      const response = await fetch("/images/image.png");
+      if (!response.ok) {
+        throw new Error("QR code image not found");
+      }
+      const blob = await response.blob();
+      if (navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob })
+        ]);
+        alert("QR code copied to clipboard!");
+      } else {
+        // Fallback: trigger download instead
+        downloadQRCode();
+      }
+    } catch (error) {
+      console.error("Failed to copy QR code:", error);
+      alert("Failed to copy QR code. Please download it instead.");
+    }
+  };
+
   // Show loading state while checking authentication
   if (isLoading) {
     return (
@@ -282,14 +345,14 @@ export default function LandingPage() {
 
       {/* Main Content */}
       <main className="relative z-10 flex items-center justify-center h-[calc(100vh-64px)] sm:h-[calc(100vh-68px)] md:h-[calc(100vh-72px)] px-4 sm:px-4 overflow-y-auto sm:overflow-hidden">
-        <div className={`w-full h-auto sm:h-auto sm:max-w-lg rounded-2xl sm:rounded-3xl ${gameStarted ? 'p-5 sm:p-4 md:p-5' : 'p-6 sm:p-5 md:p-6'} shadow-[0_0_30px_rgba(59,130,246,0.3),0_0_60px_rgba(59,130,246,0.2)] border border-gray-700/30 backdrop-blur-sm bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-gray-900/90 relative overflow-visible flex flex-col justify-center my-4 sm:my-0`}>
+        <div className={`w-full h-auto sm:h-auto sm:max-w-sm rounded-2xl sm:rounded-xl ${gameStarted ? 'p-5 sm:p-2.5 md:p-3' : 'p-6 sm:p-2.5 md:p-3'} shadow-[0_0_30px_rgba(59,130,246,0.3),0_0_60px_rgba(59,130,246,0.2)] border border-gray-700/30 backdrop-blur-sm bg-gradient-to-br from-gray-900/90 via-gray-800/80 to-gray-900/90 relative overflow-visible flex flex-col justify-center my-4 sm:my-0`}>
           {/* Inner glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-cyan-500/5 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-cyan-500/5 rounded-2xl sm:rounded-xl pointer-events-none"></div>
           
           <div className="relative z-10 flex flex-col justify-center">
             {/* Select Game Button - At the top */}
             {!gameStarted && (
-              <div className="flex justify-center mb-6 sm:mb-3 md:mb-4">
+              <div className="flex justify-center mb-6 sm:mb-1.5 md:mb-2">
                 <GameSelector 
                   selectedGame={selectedGame} 
                   onGameChange={setSelectedGame} 
@@ -298,27 +361,27 @@ export default function LandingPage() {
             )}
 
             {/* VIP Status */}
-            <div className={`text-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-6 sm:mb-3 md:mb-4'}`}>
+            <div className={`text-center ${gameStarted ? 'mb-3 sm:mb-1.5 md:mb-1.5' : 'mb-6 sm:mb-1.5 md:mb-2'}`}>
               {isVip ? (
-                <h2 className={`font-serif font-bold text-white mb-2 ${gameStarted ? 'text-2xl sm:text-xl md:text-2xl' : 'text-3xl sm:text-2xl md:text-3xl'}`}>
+                <h2 className={`font-serif font-bold text-white mb-2 ${gameStarted ? 'text-2xl sm:text-base md:text-lg' : 'text-3xl sm:text-lg md:text-xl'}`}>
                   YOU&apos;RE VIP USER ★
                 </h2>
               ) : (
-                <h2 className={`font-serif font-bold text-white mb-2 ${gameStarted ? 'text-2xl sm:text-xl md:text-2xl' : 'text-3xl sm:text-2xl md:text-3xl'}`}>
+                <h2 className={`font-serif font-bold text-white mb-2 ${gameStarted ? 'text-2xl sm:text-base md:text-lg' : 'text-3xl sm:text-lg md:text-xl'}`}>
                   YOU&apos;RE NOT VIP ★
                 </h2>
               )}
               {!gameStarted && (
-                <p className="text-xl sm:text-lg md:text-xl font-serif font-semibold text-white mb-6 sm:mb-3 md:mb-4">CLICK TO START</p>
+                <p className="text-xl sm:text-sm md:text-base font-serif font-semibold text-white mb-6 sm:mb-1.5 md:mb-2">CLICK TO START</p>
               )}
             </div>
 
             {/* Start Now Button - Shows payment flow for non-VIP, starts game for VIP */}
-            <div className={`flex flex-col items-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-6 sm:mb-4 md:mb-5'}`}>
+            <div className={`flex flex-col items-center ${gameStarted ? 'mb-4 sm:mb-1.5 md:mb-1.5' : 'mb-6 sm:mb-2 md:mb-3'}`}>
               <button
                 onClick={handleStartNow}
                 disabled={isProcessingPayment || timer > 0}
-                className="px-8 py-4 sm:px-6 sm:py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-serif font-bold text-base sm:text-base transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-4 sm:px-4 sm:py-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 rounded-full text-white font-serif font-bold text-base sm:text-xs transition-all shadow-lg shadow-red-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessingPayment 
                   ? "Processing..." 
@@ -327,17 +390,108 @@ export default function LandingPage() {
                   : "START NOW"}
               </button>
               {!isVip && (
-                <div className="flex flex-col items-center mt-2">
+                <div className="flex flex-col items-center mt-2 w-full max-w-sm">
+                  {/* UPI ID with copy button */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <p className="text-white font-serif text-sm sm:text-xs">Pay here: {upiId}</p>
+                    <button
+                      onClick={copyUpiId}
+                      className="p-1.5 sm:p-1 bg-gray-700 hover:bg-gray-600 rounded text-white transition-colors flex-shrink-0"
+                      title="Copy UPI ID"
+                      type="button"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    </button>
+                  </div>
                   
-                  <p className="text-white font-serif text-sm sm:text-xs"> Pay here: vivekvishvkarma@yesg</p>
+                  {/* QR Code */}
+                  <div className="flex flex-col items-center mb-3">
+                    <div className="bg-white p-3 sm:p-1.5 rounded-lg shadow-lg">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/images/image.png"
+                        alt="UPI QR Code"
+                        className="w-48 h-48 sm:w-36 sm:h-36 object-contain"
+                        onError={(e) => {
+                          console.error("QR code image not found at /images/image.png");
+                          const target = e.currentTarget;
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="w-48 h-48 sm:w-36 sm:h-36 flex items-center justify-center bg-gray-200 rounded">
+                                <p class="text-gray-600 text-xs text-center p-3 sm:p-2">QR Code image not found<br/>Please add image.png to /public/images/</p>
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Copy and Download QR buttons */}
+                    <div className="flex gap-2 mt-3 sm:mt-1.5">
+                      <button
+                        onClick={copyQRCode}
+                        className="px-4 py-2 sm:px-2.5 sm:py-1 bg-blue-600 hover:bg-blue-700 rounded-lg sm:rounded text-white font-serif text-sm sm:text-xs transition-colors flex items-center gap-2 sm:gap-1"
+                        type="button"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy QR
+                      </button>
+                      <button
+                        onClick={downloadQRCode}
+                        className="px-4 py-2 sm:px-2.5 sm:py-1 bg-green-600 hover:bg-green-700 rounded-lg sm:rounded text-white font-serif text-sm sm:text-xs transition-colors flex items-center gap-2 sm:gap-1"
+                        type="button"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Download QR
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Game Result - Show random number icon after game started (VIP only) */}
             {gameStarted && gameResult && isVip && (
-              <div className="flex flex-col items-center justify-center mb-5 sm:mb-3 md:mb-4">
-                <div className="relative w-36 h-36 sm:w-32 md:w-36 sm:h-32 md:h-36 mb-3 sm:mb-2 md:mb-3 flex items-center justify-center">
+              <div className="flex flex-col items-center justify-center mb-5 sm:mb-1.5 md:mb-2">
+                <div className="relative w-36 h-36 sm:w-24 md:w-28 sm:h-24 md:h-28 mb-3 sm:mb-1 md:mb-1.5 flex items-center justify-center">
                   {/* Shadow layer behind the coin */}
                   <div className="absolute inset-0 bg-black/30 rounded-full blur-xl scale-110"></div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -366,7 +520,7 @@ export default function LandingPage() {
                     }}
                   />
                 </div>
-                <p className="text-xl sm:text-xl md:text-2xl font-serif font-bold text-white capitalize mb-1">
+                <p className="text-xl sm:text-base md:text-lg font-serif font-bold text-white capitalize mb-1 sm:mb-0.5">
                   {gameResult.color}
                 </p>
                 {/* Timer display below coin */}
@@ -381,23 +535,23 @@ export default function LandingPage() {
           </div>
 
           {/* New User Section - Above social icons */}
-          <div className={`text-center ${gameStarted ? 'mb-4 sm:mb-2 md:mb-3' : 'mb-5 sm:mb-3 md:mb-4'}`}>
-            <p className="text-xl sm:text-lg md:text-xl font-serif font-bold text-white mb-4 sm:mb-2 md:mb-3">NEW USER ?</p>
+          <div className={`text-center ${gameStarted ? 'mb-4 sm:mb-1.5 md:mb-1.5' : 'mb-5 sm:mb-1.5 md:mb-2'}`}>
+            <p className="text-xl sm:text-sm md:text-base font-serif font-bold text-white mb-4 sm:mb-1.5 md:mb-1.5">NEW USER ?</p>
             <a
               href="https://jalwagame1.link/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-8 py-4 sm:px-5 sm:py-2 md:px-6 md:py-3 bg-blue-400 hover:bg-blue-500 rounded-full text-white font-serif font-bold text-base sm:text-sm md:text-base transition-all shadow-md hover:shadow-lg underline"
+              className="inline-block px-8 py-4 sm:px-3 sm:py-1.5 md:px-4 md:py-2 bg-blue-400 hover:bg-blue-500 rounded-full text-white font-serif font-bold text-base sm:text-xs transition-all shadow-md hover:shadow-lg underline"
             >
               Sign Up Jalwa Game
             </a>
           </div>
 
           {/* Social Media Icons */}
-          <div className={`flex justify-center gap-4 sm:gap-3 md:gap-4 ${gameStarted ? 'mt-4 sm:mt-2 md:mt-3' : 'mt-5 sm:mt-3 md:mt-4'}`}>
+          <div className={`flex justify-center gap-4 sm:gap-1.5 md:gap-2 ${gameStarted ? 'mt-4 sm:mt-1.5 md:mt-1.5' : 'mt-5 sm:mt-1.5 md:mt-2'}`}>
             <a
               href="#"
-              className="w-12 h-12 sm:w-12 sm:h-12 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
+              className="w-12 h-12 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors"
               aria-label="WhatsApp"
             >
               <svg
@@ -412,7 +566,7 @@ export default function LandingPage() {
             </a>
             <a
               href="#"
-              className="w-12 h-12 sm:w-12 sm:h-12 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors"
+              className="w-12 h-12 sm:w-8 sm:h-8 bg-blue-400 rounded-full flex items-center justify-center hover:bg-blue-500 transition-colors"
               aria-label="Telegram"
             >
               <svg
@@ -427,7 +581,7 @@ export default function LandingPage() {
             </a>
             <a
               href="#"
-              className="w-12 h-12 sm:w-12 sm:h-12 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
+              className="w-12 h-12 sm:w-8 sm:h-8 bg-red-600 rounded-full flex items-center justify-center hover:bg-red-700 transition-colors"
               aria-label="YouTube"
             >
               <svg
