@@ -13,9 +13,9 @@ Open browser DevTools (F12) and check for errors:
 #### 2. Check Environment Variables
 Make sure `.env` has:
 ```env
-NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
-RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
-RAZORPAY_KEY_SECRET="XgFqSKHaloOraAdBKdWwM6pC"
+NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
+RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
+RAZORPAY_KEY_SECRET="VAUfPGHigKSR4sRL4b7KtesR"
 ```
 
 **Important:** `NEXT_PUBLIC_RAZORPAY_KEY_ID` must be set for frontend!

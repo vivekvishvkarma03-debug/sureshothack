@@ -35,11 +35,11 @@ Required environment variables (already configured):
 
 ```env
 # Backend (Server-side)
-RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
-RAZORPAY_KEY_SECRET="XgFqSKHaloOraAdBKdWwM6pC"
+RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
+RAZORPAY_KEY_SECRET="VAUfPGHigKSR4sRL4b7KtesR"
 
 # Frontend (Client-side)
-NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
+NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
 ```
 
 ## 🏗️ Architecture

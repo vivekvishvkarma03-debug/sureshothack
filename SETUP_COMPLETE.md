@@ -48,9 +48,9 @@ JWT_SECRET="your-super-secret-jwt-key-change-in-production"
 JWT_EXPIRES_IN="7d"
 
 # Razorpay
-RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
-RAZORPAY_KEY_SECRET="XgFqSKHaloOraAdBKdWwM6pC"
-NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
+RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
+RAZORPAY_KEY_SECRET="VAUfPGHigKSR4sRL4b7KtesR"
+NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
 
 # Next.js
 NEXT_PUBLIC_API_URL=""

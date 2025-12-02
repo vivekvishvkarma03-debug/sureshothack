@@ -25,11 +25,11 @@ JWT_EXPIRES_IN="7d"
 # RAZORPAY PAYMENT GATEWAY
 # ============================================
 # Razorpay Live Credentials
-RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
-RAZORPAY_KEY_SECRET="XgFqSKHaloOraAdBKdWwM6pC"
+RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
+RAZORPAY_KEY_SECRET="VAUfPGHigKSR4sRL4b7KtesR"
 
 # Public Razorpay Key (for frontend)
-NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_2cN75xjOem1FiH"
+NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_RlF6Zqdn6dWRLM"
 
 # ============================================
 # NEXT.JS
