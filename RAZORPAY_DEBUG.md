@@ -39,7 +39,7 @@ typeof window.Razorpay !== 'undefined' // Should be true
 curl -X POST http://localhost:3000/api/payments/create-order \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"amount": 65500, "currency": "INR"}'
+  -d '{"amount": 110000, "currency": "INR"}'
 ```
 
 Should return:
@@ -48,7 +48,7 @@ Should return:
   "success": true,
   "order": {
     "id": "order_xxx",
-    "amount": 65500,
+    "amount": 110000,
     "currency": "INR"
   }
 }
