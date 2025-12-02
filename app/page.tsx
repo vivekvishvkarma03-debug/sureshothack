@@ -88,7 +88,7 @@ export default function LandingPage() {
 
     try {
       // Create order on backend
-      const orderResponse = await apiClient.createPaymentOrder(65500, "INR");
+      const orderResponse = await apiClient.createPaymentOrder(110000, "INR");
       console.log("Order response:", orderResponse);
 
       if (!orderResponse.success || !orderResponse.order) {
