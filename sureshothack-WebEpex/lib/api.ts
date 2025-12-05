@@ -112,19 +112,23 @@ class ApiClient {
     });
   }
 
-  async createPaymentOrder(amount: number, currency: string = 'INR'): Promise<ApiResponse & { order?: { id: string; amount: number; currency: string; receipt: string } }> {
-    return this.request('/api/payments/create-order', {
+  async createPayUOrder(amount: number, firstname: string, email: string, phone: string): Promise<ApiResponse & { order?: { txnid: string; amount: number; currency: string; hash: string; key: string; surl: string; furl: string } }> {
+    return this.request('/api/payments/create-payu-order', {
       method: 'POST',
-      body: JSON.stringify({ amount, currency }),
-    }) as Promise<ApiResponse & { order?: { id: string; amount: number; currency: string; receipt: string } }>;
+      body: JSON.stringify({ amount, firstname, email, phone }),
+    }) as Promise<ApiResponse & { order?: { txnid: string; amount: number; currency: string; hash: string; key: string; surl: string; furl: string } }>;
   }
 
   async verifyPayment(paymentData: {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
+    txnid: string;
+    amount: string;
+    productinfo: string;
+    firstname: string;
+    email: string;
+    status: string;
+    hash: string;
   }): Promise<ApiResponse & { payment?: { orderId: string; paymentId: string }; user?: User }> {
-    return this.request('/api/payments/verify', {
+    return this.request('/api/payments/verify-payu', {
       method: 'POST',
       body: JSON.stringify(paymentData),
     }) as Promise<ApiResponse & { payment?: { orderId: string; paymentId: string }; user?: User }>;

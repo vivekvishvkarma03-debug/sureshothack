@@ -1,5 +1,7 @@
 /**
  * Razorpay TypeScript Types
+ * 
+ * @deprecated This module is deprecated. Use PayU integration instead (lib/types/payu.ts)
  */
 
 export interface RazorpayOrder {

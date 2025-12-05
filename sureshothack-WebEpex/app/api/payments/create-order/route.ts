@@ -1,49 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createRazorpayOrder } from '@/lib/utils/razorpay';
-import { validatePaymentRequest } from '@/lib/services/paymentService';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { amount, currency = 'INR', notes } = body;
-
-    // Validate payment amount
-    try {
-      validatePaymentRequest(amount);
-    } catch (validationError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            validationError instanceof Error
-              ? validationError.message
-              : 'Invalid payment amount',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Create Razorpay order
-    const order = await createRazorpayOrder({
-      amount,
-      currency,
-      notes,
-    });
-
-    return NextResponse.json({
-      success: true,
-      order,
-    });
-  } catch (error) {
-    console.error('Razorpay order creation error:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          error instanceof Error ? error.message : 'Failed to create order',
-      },
-      { status: 500 }
-    );
-  }
+/**
+ * DEPRECATED: This endpoint is no longer used
+ * Use /api/payments/create-payu-order instead
+ */
+export async function POST() {
+  return NextResponse.json(
+    {
+      success: false,
+      message: 'This endpoint is deprecated. Use /api/payments/create-payu-order instead.',
+    },
+    { status: 410 } // 410 Gone
+  );
 }
 

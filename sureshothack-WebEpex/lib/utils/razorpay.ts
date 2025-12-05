@@ -1,5 +1,8 @@
 /**
  * Razorpay Utility Functions
+ * 
+ * @deprecated This module is deprecated. Use PayU integration instead (lib/utils/payu.ts)
+ * 
  * Centralized configuration and helper functions for Razorpay integration
  */
 

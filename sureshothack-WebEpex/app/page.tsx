@@ -5,23 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { useAuth } from "@/context/AuthContext";
-import Script from "next/script";
 import { apiClient } from "@/lib/api";
 import {
-  getRazorpayKeyId,
-  isRazorpayLoaded,
-  createRazorpayCheckout,
-  getDefaultRazorpayOptions,
-} from "@/lib/utils/razorpay-client";
-import type {
-  RazorpayPaymentResponse,
-} from "@/lib/types/razorpay";
+  getPayUMerchantKey,
+  submitPayUForm,
+  getDefaultPayUOptions,
+} from "@/lib/utils/payu-client";
 import GameSelector from "@/components/game/GameSelector";
 
 export default function LandingPage() {
   const { isAuthenticated, user, logout, isLoading, checkAuth } = useAuth();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedGame, setSelectedGame] = useState<string>("");
   const [gameResult, setGameResult] = useState<{ number: number; color: string; imageUrl: string } | null>(null);
@@ -65,108 +59,51 @@ export default function LandingPage() {
       return;
     }
 
-    // Check if Razorpay is loaded
-    const razorpayReady = razorpayLoaded && isRazorpayLoaded();
-    console.log("Razorpay loaded:", razorpayReady, "State:", razorpayLoaded, "Window:", typeof window !== 'undefined' && typeof window.Razorpay !== 'undefined');
-
-    if (!razorpayReady) {
-      console.warn("Razorpay not ready, waiting...");
-      // Wait a bit and check again
-      setTimeout(() => {
-        if (isRazorpayLoaded()) {
-          setRazorpayLoaded(true);
-          handleBecomeVip(); // Retry
-        } else {
-          alert("Payment gateway is loading. Please wait a moment and try again.");
-        }
-      }, 1000);
-      return;
-    }
-
     setIsProcessingPayment(true);
-    console.log("Creating payment order...");
+    console.log("Creating PayU payment order...");
 
     try {
-      // Create order on backend
-      const orderResponse = await apiClient.createPaymentOrder(110000, "INR");
-      console.log("Order response:", orderResponse);
+      // Create PayU order on backend
+      const orderResponse = await apiClient.createPayUOrder(
+        1100,
+        user.fullName,
+        user.email,
+        "9999999999" // Default phone, update if needed
+      );
+      console.log("PayU order response:", orderResponse);
 
       if (!orderResponse.success || !orderResponse.order) {
-        throw new Error(orderResponse.message || "Failed to create order");
+        throw new Error(orderResponse.message || "Failed to create PayU order");
       }
 
       const order = orderResponse.order;
-      console.log("Order created:", order);
+      console.log("PayU order created:", order);
 
-      // Get Razorpay key ID
-      let razorpayKeyId: string;
+      // Get PayU merchant key
+      let merchantKey: string;
       try {
-        razorpayKeyId = getRazorpayKeyId();
-        console.log("Razorpay key ID:", razorpayKeyId.substring(0, 10) + "...");
+        merchantKey = getPayUMerchantKey();
+        console.log("PayU merchant key configured");
       } catch (error) {
-        throw new Error("Razorpay key is not configured. Please contact support.");
+        throw new Error("PayU merchant key is not configured. Please contact support.");
       }
 
-      // Initialize Razorpay checkout
-      const options = getDefaultRazorpayOptions(
-        order.id,
+      // Create PayU form options
+      const options = getDefaultPayUOptions(
+        order.txnid,
         order.amount,
-        order.currency,
-        async function (response: RazorpayPaymentResponse) {
-          console.log("Payment response:", response);
-          // Verify payment on backend
-          try {
-            const verifyResponse = await apiClient.verifyPayment({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-
-            console.log("Verification response:", verifyResponse);
-
-            if (verifyResponse.success) {
-              alert("Payment successful! Your VIP subscription is now active.");
-              // Refresh user data
-              await checkAuth();
-            } else {
-              alert(
-                verifyResponse.message ||
-                  "Payment verification failed. Please contact support."
-              );
-            }
-          } catch (error) {
-            console.error("Payment verification error:", error);
-            alert("Payment verification failed. Please contact support.");
-          } finally {
-            setIsProcessingPayment(false);
-          }
-        },
+        order.hash,
         {
           fullName: user.fullName,
           email: user.email,
+          phone: "9999999999",
         }
       );
 
-      // Ensure key is set
-      options.key = razorpayKeyId;
-
-      // Add modal dismiss handler
-      options.modal = {
-        ondismiss: function () {
-          console.log("Razorpay modal dismissed");
-          setIsProcessingPayment(false);
-        },
-      };
-
-      console.log("Opening Razorpay checkout...");
-      const razorpay = createRazorpayCheckout(options);
-      razorpay.open();
+      console.log("Submitting PayU form...");
+      // Submit PayU form which redirects to PayU gateway
+      submitPayUForm(options);
       
-      razorpay.on("payment.failed", function (response: any) {
-        console.error("Payment failed:", response);
-        alert("Payment failed. Please try again.");
-        setIsProcessingPayment(false);
-      });
     } catch (error) {
       console.error("Payment error:", error);
       alert(
@@ -597,21 +534,6 @@ export default function LandingPage() {
           </div>
         </div>
       </main>
-
-      {/* Razorpay Script */}
-      <Script
-        id="razorpay-checkout-js"
-        src="https://checkout.razorpay.com/v1/checkout.js"
-        strategy="afterInteractive"
-        onLoad={() => {
-          console.log("Razorpay script loaded");
-          setRazorpayLoaded(true);
-        }}
-        onError={(e) => {
-          console.error("Failed to load Razorpay script:", e);
-          alert("Failed to load payment gateway. Please refresh the page.");
-        }}
-      />
     </div>
   );
 }

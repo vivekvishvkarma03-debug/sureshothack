@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/middleware/auth';
-import { verifyPaymentAndUpdateUser } from '@/lib/services/paymentService';
+import { verifyPayUPaymentAndUpdateUser } from '@/lib/services/paymentService';
 import type { PayUVerifyRequest } from '@/lib/types/payu';
 
 export async function POST(request: NextRequest) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       hash,
     };
 
-    const result = await verifyPaymentAndUpdateUser(
+    const result = await verifyPayUPaymentAndUpdateUser(
       authUser.userId,
       paymentData
     );
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-    console.error('Payment verification error:', error);
+    console.error('PayU payment verification error:', error);
     return NextResponse.json(
       {
         success: false,
@@ -85,4 +85,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

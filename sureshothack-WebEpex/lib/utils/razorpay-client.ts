@@ -1,5 +1,8 @@
 /**
  * Razorpay Client-side Utilities
+ * 
+ * @deprecated This module is deprecated. Use PayU integration instead (lib/utils/payu-client.ts)
+ * 
  * Helper functions for Razorpay integration on the frontend
  */
 
